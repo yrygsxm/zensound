@@ -893,12 +893,13 @@ const MeditatingFigure = () => {
 };
 
 // 主要组件
-const App = () => {
+ const App = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [lang, setLang] = useState('ja');
   const [langMenuOpen, setLangMenuOpen] = useState(false);
   const [videoOpen, setVideoOpen] = useState(false);
+  const [videoLoaded, setVideoLoaded] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
   const [systemStep, setSystemStep] = useState(2);
   const t = getT(lang);
@@ -939,35 +940,50 @@ const App = () => {
   return (
     <div className="bg-stone-950 min-h-screen font-sans text-stone-100 selection:bg-amber-900 selection:text-amber-100">
       <StatsModal open={statsOpen} onClose={() => setStatsOpen(false)} t={t} />
-      {videoOpen && (
+      {/* Preloaded video modal (kept mounted to avoid black screen on open) */}
+      <div
+        className={`fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300 ${videoOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        onClick={() => setVideoOpen(false)}
+        aria-hidden={!videoOpen}
+      >
         <div
-          className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
-          onClick={() => setVideoOpen(false)}
+          className="relative w-full max-w-4xl bg-stone-950 border border-stone-800 rounded-2xl overflow-hidden shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
         >
-          <div
-            className="relative w-full max-w-4xl bg-stone-950 border border-stone-800 rounded-2xl overflow-hidden shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
+          <button
+            onClick={() => setVideoOpen(false)}
+            className="absolute top-3 right-3 z-10 p-2 rounded-full bg-stone-900/80 text-stone-200 hover:text-amber-400 hover:bg-stone-900 transition-colors"
+            aria-label="Close video"
           >
-            <button
-              onClick={() => setVideoOpen(false)}
-              className="absolute top-3 right-3 z-10 p-2 rounded-full bg-stone-900/80 text-stone-200 hover:text-amber-400 hover:bg-stone-900 transition-colors"
-              aria-label="Close video"
-            >
-              <X size={18} />
-            </button>
-            <div style={{ padding: '56.25% 0 0 0', position: 'relative' }}>
-              <iframe
-                src="https://player.vimeo.com/video/1145883444?badge=0&autopause=0&player_id=0&app_id=58479"
-                frameBorder="0"
-                allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
-                referrerPolicy="strict-origin-when-cross-origin"
-                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
-                title="zensound"
-              />
-            </div>
+            <X size={18} />
+          </button>
+          <div style={{ padding: '56.25% 0 0 0', position: 'relative' }}>
+            {!videoLoaded && (
+              <div className="absolute inset-0 flex items-center justify-center bg-stone-950">
+                <div className="w-12 h-12 rounded-full border-4 border-stone-700 border-t-amber-500 animate-spin" />
+              </div>
+            )}
+            <iframe
+              src="https://player.vimeo.com/video/1145883444?badge=0&autopause=0&player_id=0&app_id=58479"
+              frameBorder="0"
+              allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              loading="eager"
+              onLoad={() => setVideoLoaded(true)}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                opacity: videoLoaded ? 1 : 0,
+                transition: 'opacity 250ms ease',
+              }}
+              title="zensound"
+            />
           </div>
         </div>
-      )}
+      </div>
       
       {/* 导航栏 */}
       <nav className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-stone-950/90 backdrop-blur-md py-3 shadow-lg' : 'bg-transparent py-6'}`}>
